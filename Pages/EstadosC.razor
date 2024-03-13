@@ -1,0 +1,89 @@
+﻿@page "/estadosclientes"
+@using Microsoft.EntityFrameworkCore
+@using PruebaFinal
+
+<PageTitle>Estados</PageTitle>
+
+<center><h3><b>Ingresar Estado de Caso</b></h3></center>
+
+<form>
+    <div class="mb-3">
+        <label for="nombreEstado" class="form-label"></label>
+        <input @bind="Estado.EstadoNombre" id="nombreEstado" class="form-control" placeholder="Nombre del Estado" />
+    </div>
+
+    <br>
+    <center><button type="submit" @onclick="AgregarEstadoCaso" class="btn btn-info">Agregar.</button></center>
+
+</form>
+
+<div>
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert mt-3 alert-dismissible fade show" role="alert">
+            @mensaje
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+</div>
+@code {
+    public ApplicationDbContext.Estado Estado = new ApplicationDbContext.Estado();
+    public string mensaje;
+    public EstadoCasoService estadoCasoService;
+
+    protected override void OnInitialized()
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
+        optionsBuilder.UseSqlServer("Server=CHRISTOPHER;Database=MesaDeAbogados;Integrated Security=True;TrustServerCertificate=True;");
+        estadoCasoService = new EstadoCasoService(new ApplicationDbContext(optionsBuilder.Options));
+        base.OnInitialized();
+    }
+
+    public void AgregarEstadoCaso()
+    {
+        try
+        {
+            var estadoExistente = estadoCasoService.GetEstadoCasoPorNombre(Estado.EstadoNombre);
+
+            if (estadoExistente != null)
+            {
+                mensaje = "Error: Estado de Caso ya existe";
+            }
+            else
+            {
+                estadoCasoService.AddEstadoCaso(Estado);
+                mensaje = "Éxito: Estado de Caso agregado correctamente";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error: {ex.Message} \nStackTrace: {ex.StackTrace}";
+        }
+    }
+
+    public class EstadoCasoService
+    {
+        public readonly ApplicationDbContext _context;
+
+        public EstadoCasoService(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public List<ApplicationDbContext.Estado> GetEstadosCasos()
+        {
+            return _context.Estados.ToList();
+        }
+
+        public void AddEstadoCaso(ApplicationDbContext.Estado Estado)
+        {
+            _context.Estados.Add(Estado);
+            _context.SaveChanges();
+        }
+
+        public ApplicationDbContext.Estado GetEstadoCasoPorNombre(string nombre)
+        {
+            return _context.Estados.FirstOrDefault(e => e.EstadoNombre == nombre);
+        }
+    }
+}

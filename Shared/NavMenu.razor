@@ -1,0 +1,131 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Practica Final Web</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+
+        <div class="nav-item px-4">
+            <button class="nav-link custom-button" @onclick="ToggleCasos">
+                <span class="oi oi-caret-bottom" aria-hidden="true"></span> Gestión de casos
+            </button>
+        </div>
+        @if (verCasos)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link custom-link" href="agregarcasos">
+                    <span class="oi oi-book" aria-hidden="true"></span> Agregar:
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link custom-link" href="editarCasos">
+                    <span class="oi oi-pencil" aria-hidden="true"></span> Modificar:
+                </NavLink>
+            </div>
+        }
+
+        <div class="nav-item px-4">
+            <button class="nav-link custom-button" @onclick="ToggleClientes">
+                <span class="oi oi-caret-bottom" aria-hidden="true"></span> Gestión de clientes
+            </button>
+        </div>
+        @if (verClientes)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link custom-link" href="aclientes">
+                    <span class="oi oi-book" aria-hidden="true"></span> Agregar clientes:
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link custom-link" href="eclientes">
+                    <span class="oi oi-pencil" aria-hidden="true"></span> Modificar clientes:
+                </NavLink>
+            </div>
+        }
+
+        <div class="nav-item px-4">
+            <button class="nav-link custom-button" @onclick="ToggleReportes">
+                <span class="oi oi-caret-bottom" aria-hidden="true"></span> Reportes
+            </button>
+        </div>
+        @if (verReportes)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link custom-link" href="reportes">
+                    <span class="oi oi-envelope-open" aria-hidden="true"></span> Datos:
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link custom-link" href="ubi" >
+                    <span class="oi oi-map" aria-hidden="true"></span> Ubicaciones:
+                </NavLink>
+            </div>
+        }
+
+        <div class="nav-item px-4">
+            <button class="nav-link custom-button" @onclick="ToggleConfiguraciones">
+                <span class="oi oi-caret-bottom" aria-hidden="true"></span> Configuración
+            </button>
+        </div>
+        @if (verConfiguracion)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link custom-link" href="tipoc">
+                    <span class="oi oi-clipboard" aria-hidden="true"></span> Tipos de casos:
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link custom-link" href="estadosclientes">
+                    <span class="oi oi-signal" aria-hidden="true"></span> Estado de los casos:
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link custom-link" href="usuariosistema">
+                    <span class="oi oi-bookmark" aria-hidden="true"></span> Agregar abogados:
+                </NavLink>
+            </div>
+        }
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="salir">
+                <span class="oi oi-power-standby" aria-hidden="true"></span> Salir:
+            </NavLink>
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+    private bool verCasos = false;
+    private bool verClientes = false;
+    private bool verReportes = false;
+    private bool verConfiguracion = false;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+    private void ToggleCasos()
+    {
+        verCasos = !verCasos;
+    }
+    private void ToggleClientes()
+    {
+        verClientes = !verClientes;
+    }
+    private void ToggleReportes()
+    {
+        verReportes = !verReportes;
+    }
+    private void ToggleConfiguraciones()
+    {
+        verConfiguracion = !verConfiguracion;
+    }
+}

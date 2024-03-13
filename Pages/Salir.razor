@@ -1,0 +1,14 @@
+﻿@page "/salir"
+
+<PageTitle>Salir</PageTitle>
+
+<div style="display: flex; justify-content: center; align-items: center; height: 75vh;">
+    <button id="idbotonsalir" name="salirboton" style="background-color: red; color: white; padding: 30px; font-size: 28px;" @onclick="Salir_Programa">Salir.</button>
+</div>
+
+@code {
+    private void Salir_Programa()
+    {
+        Environment.Exit(0);
+    }
+}

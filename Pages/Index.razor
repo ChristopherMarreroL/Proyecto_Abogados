@@ -1,0 +1,80 @@
+﻿@page "/ubi"
+@inject IJSRuntime JS
+@using System.Collections.Generic
+@using System.Linq
+@using System.Threading.Tasks
+@using Microsoft.EntityFrameworkCore
+@using System.Text
+@inject IJSRuntime JSRuntime
+@inject ApplicationDbContext DbContext
+
+<PageTitle>Ubicación</PageTitle>
+
+
+<div class="qr-code-container">
+    <div class="qr-code" style></div>
+</div>
+<center><div id="map" class="map" style="height:500px;width:1000px"></div></center>
+
+<br>
+<center><button class="btn btn-warning" data-toggle="tooltip" title="Exportar" @onclick="Exportar"><b>Mapa.</b></button></center>
+
+
+@code {
+    public List<ApplicationDbContext.GestionCaso> casos;
+    public CasoService casoService;
+
+    public async Task Exportar()
+    {
+        if (casos != null && casos.Any())
+        {
+            Console.WriteLine($"Número de casos: {casos.Count}");
+            Console.WriteLine($"Primer caso: Latitud {casos[0].UbicacionLatitud}, Longitud {casos[0].UbicacionLongitud}");
+            await JSRuntime.InvokeVoidAsync("console.log", "Llamando a GenerarMapa desde Blazor");
+            await JSRuntime.InvokeVoidAsync("GenerarMapa", casos);
+        }
+        else
+        {
+            Console.WriteLine("La lista de casos está vacía o nula.");
+        }
+    }
+
+
+    protected override void OnInitialized()
+    {
+        casos = ObtenerDatos();
+        base.OnInitialized();
+    }
+
+    public List<ApplicationDbContext.GestionCaso> ObtenerDatos()
+    {
+        try
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
+            optionsBuilder.UseSqlServer("Server=CHRISTOPHER;Database=MesaDeAbogados;Integrated Security=True;TrustServerCertificate=True;");
+            casoService = new CasoService(new ApplicationDbContext(optionsBuilder.Options));
+            return casoService.GetGestionCasos().ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener datos: {ex.Message}");
+            return new List<ApplicationDbContext.GestionCaso>();
+        }
+    }
+
+    public class CasoService
+    {
+        public readonly ApplicationDbContext _context;
+
+        public CasoService(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public List<ApplicationDbContext.GestionCaso> GetGestionCasos()
+        {
+            return _context.gestionCasos.ToList();
+        }
+    }
+}
+

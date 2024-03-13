@@ -1,0 +1,213 @@
+﻿@page "/agregarcasos"
+@using Microsoft.EntityFrameworkCore
+@using PruebaFinal
+
+<PageTitle>Casos</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="text-center"><b>Agregar Caso:</b></h2>
+                </div>
+
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="Fecha_caso" class="form-label"></label>
+                        <input @bind="GestionCaso.FechaDelCaso" id="idfechacaso" name="casofecha1" class="form-control" placeholder="Fecha del caso:" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Cliente" class="form-label"><b>Cliente:</b></label>
+                        <select @bind="GestionCaso.Cliente" id="idcliente485" name="cliente858631" class="form-select">
+                            @foreach (var cliente in Clientes)
+                            {
+                                <option value="@cliente.Nombre">@cliente.Nombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label"></label>
+                        <input @bind="GestionCaso.UbicacionLatitud" id="UbicacionLatitud" name="ubilatitud008" class="form-control" placeholder="Ubicacion Latitud" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="UbicacionLongitud" class="form-label"></label>
+                        <input @bind="GestionCaso.UbicacionLongitud" id="UbicacionLongitud" name="ubilongitud009" class="form-control" placeholder="Ubicacion Longitud" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Tipo_caso" class="form-label"><b>Tipo de caso:</b></label>
+                        <select @bind="GestionCaso.TipoDeCaso" id="idtypecaso" name="tipo_de_caso_961" class="form-select">
+                            @foreach (var tipoCaso in TiposDeCaso)
+                            {
+                                <option value="@tipoCaso.EstadoCasos">@tipoCaso.EstadoCasos</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Abogado_asignado" class="form-label"><b>Abogado asignado:</b></label>
+                        <select @bind="GestionCaso.AbogadoAsignado" id="idabogado" name="abogado56161" class="form-select">
+                            @foreach (var abogado in Abogados)
+                            {
+                                <option value="@abogado.Nombre">@abogado.Nombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Estado_caso" class="form-label"><b>Estado del caso:</b></label>
+                        <select @bind="GestionCaso.EstadoDelCaso" class="form-select">
+                            @foreach (var estado in Estados)
+                            {
+                                <option value="@estado.EstadoNombre">@estado.EstadoNombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="DescripcionDelCaso" class="form-label"></label>
+                        <input @bind="GestionCaso.DescripcionDelCaso" id="DescripcionDelCaso" class="form-control" placeholder="Descripcion Del Caso:" />
+                    </div>
+
+                    <center>
+                        <button id="agregarcaso" name="botoncasoagregar" @onclick="AgregarCaso" class="btn btn-info">Agregar Caso.</button>
+                    </center>
+                    <br>
+
+
+                </div>
+                @if (string.IsNullOrEmpty(mensaje))
+                {
+                    <div class="alert alert-success mt-3" role="alert">
+                        @mensaje
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    public ApplicationDbContext.GestionCaso GestionCaso = new ApplicationDbContext.GestionCaso();
+    public string mensaje;
+    public CasoService casoService;
+    public List<ApplicationDbContext.Cliente> Clientes { get; set; }
+    public List<ApplicationDbContext.Caso> TiposDeCaso { get; set; }
+    public List<ApplicationDbContext.Abogado> Abogados { get; set; }
+    public List<ApplicationDbContext.Estado> Estados { get; set; }
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
+            optionsBuilder.UseSqlServer("Server=CHRISTOPHER;Database=MesaDeAbogados;Integrated Security=True;TrustServerCertificate=True;");
+            casoService = new CasoService(new ApplicationDbContext(optionsBuilder.Options));
+            Clientes = casoService.GetClientes();
+            TiposDeCaso = casoService.GetTiposDeCaso();
+            Abogados = casoService.GetAbogados();
+            Estados = casoService.GetEstados();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al conectar a la base de datos: {ex.Message}");
+        }
+
+        base.OnInitialized();
+    }
+
+    public void AgregarCaso()
+    {
+        if (string.IsNullOrEmpty(GestionCaso.FechaDelCaso) || string.IsNullOrEmpty(GestionCaso.Cliente))
+        {
+            mensaje = "Por favor, complete todos los campos requeridos.";
+        }
+        else
+        {
+            try
+            {
+                var casoExistente = casoService.GetCasoAll(GestionCaso);
+
+                if (casoExistente != null)
+                {
+                    mensaje = "Caso ya existe";
+                }
+                else
+                {
+
+                    var ultimoCaso = casoService.GetCaso().OrderByDescending(c => c.CasoID).FirstOrDefault();
+
+                    int nuevoCasoID = (ultimoCaso != null) ? Convert.ToInt32(ultimoCaso.CasoID.Substring(4)) + 1 : 1;
+                    GestionCaso.CasoID = $"2023{nuevoCasoID:D5}";
+
+                    casoService.AddCaso(GestionCaso);
+                    mensaje = "Caso agregado";
+                }
+            }
+            catch (Exception ex)
+            {
+                mensaje = $"Error al agregar caso: {ex.Message}";
+            }
+        }
+    }
+
+
+    public class CasoService
+    {
+        public readonly ApplicationDbContext _context;
+
+        public CasoService(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+        public List<ApplicationDbContext.Abogado> GetAbogados()
+        {
+            return _context.Abogados.ToList();
+        }
+
+        public List<ApplicationDbContext.Estado> GetEstados()
+        {
+            return _context.Estados.ToList();
+        }
+
+        public List<ApplicationDbContext.GestionCaso> GetCaso()
+        {
+            return _context.gestionCasos.ToList();
+        }
+
+        public void AddCaso(ApplicationDbContext.GestionCaso gestionCaso)
+        {
+            _context.gestionCasos.Add(gestionCaso);
+            _context.SaveChanges();
+        }
+
+        public ApplicationDbContext.GestionCaso GetCasoAll(ApplicationDbContext.GestionCaso gestionCaso)
+        {
+            return _context.gestionCasos.FirstOrDefault(c =>
+                c.FechaDelCaso == gestionCaso.FechaDelCaso &&
+                c.Cliente == gestionCaso.Cliente &&
+                c.TipoDeCaso == gestionCaso.TipoDeCaso &&
+                c.UbicacionLatitud == gestionCaso.UbicacionLatitud &&
+                c.UbicacionLongitud == gestionCaso.UbicacionLongitud &&
+                c.DescripcionDelCaso == gestionCaso.DescripcionDelCaso &&
+                c.AbogadoAsignado == gestionCaso.AbogadoAsignado &&
+                c.EstadoDelCaso == gestionCaso.EstadoDelCaso
+            );
+        }
+
+        public List<ApplicationDbContext.Cliente> GetClientes()
+        {
+            return _context.Clientes.ToList();
+        }
+
+        public List<ApplicationDbContext.Caso> GetTiposDeCaso()
+        {
+            return _context.Casos.ToList();
+        }
+    }
+}

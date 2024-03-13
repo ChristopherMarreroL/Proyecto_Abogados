@@ -1,0 +1,123 @@
+﻿@page "/eclientes"
+@using Microsoft.EntityFrameworkCore
+@using PruebaFinal
+
+<PageTitle>Editar Cliente</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="text-center"><b>Editar Cliente:</b></h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="cedulaBuscar" class="form-label">Buscar Cliente por Cédula:</label>
+                        <input @bind="cedulaBusqueda" id="cedulaBuscar" class="form-control" placeholder="Cédula" />
+                    </div>
+
+                    <center><button @onclick="BuscarCliente" class="btn btn-warning">Buscar.</button></center>
+
+                    @if (clienteEnEdicion != null)
+                    {
+                        <h3 class="text-center"></h3>
+                        <div class="mb-3">
+                            <label for="nombreEdit" class="form-label"><b>Nombre:</b></label>
+                            <input @bind="clienteEnEdicion.Nombre" id="nombreEdit" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="apellido" class="form-label"><b>Apellido:</b></label>
+                            <input @bind="clienteEnEdicion.Apellido" id="apellido" class="form-control" placeholder="Apellido" />
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label for="correo" class="form-label"><b>Correo:</b></label>
+                            <input @bind="clienteEnEdicion.Correo" id="correo" type="email" class="form-control" placeholder="Correo" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="telefono" class="form-label"><b>Teléfono:</b></label>
+                            <input @bind="clienteEnEdicion.Telefono" id="telefono" class="form-control" placeholder="Telefono" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="celular" class="form-label"><b>Celular:</b></label>
+                            <input @bind="clienteEnEdicion.Celular" id="celular" class="form-control" placeholder="Celular" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label"><b>Dirección:</b></label>
+                            <input @bind="clienteEnEdicion.Direccion" id="direccion" class="form-control" placeholder="Direccion" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="estadoCivil" class="form-label"><b>Estado Civil:</b></label>
+                            <input @bind="clienteEnEdicion.EstadoCivil" id="EstadoCivil" class="form-control" placeholder="EstadoCivil" />
+                        </div>
+
+                        <br>
+                        <center><button @onclick="GuardarEdicion" class="btn btn-primary">Guardar Cambios.</button></center>
+
+                        <p>@mensaje</p>
+                    }
+                    else
+                    {
+                        <p>@mensaje</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public ApplicationDbContext dbContext;
+    public ApplicationDbContext.Cliente clienteEnEdicion;
+    public string cedulaBusqueda;
+    public string mensaje = "";
+
+    protected override void OnInitialized()
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
+        optionsBuilder.UseSqlServer("Server=CHRISTOPHER;Database=MesaDeAbogados;Integrated Security=True;TrustServerCertificate=True;");
+        dbContext = new ApplicationDbContext(optionsBuilder.Options);
+    }
+
+    public void BuscarCliente()
+    {
+        clienteEnEdicion = dbContext.Clientes.FirstOrDefault(c => c.Cedula == cedulaBusqueda);
+        if (clienteEnEdicion == null)
+        {
+            mensaje = "Cliente no encontrado";
+        }
+        else
+        {
+            mensaje = "";
+        }
+    }
+
+    public void GuardarEdicion()
+    {
+        if (clienteEnEdicion != null)
+        {
+            var existingCliente = dbContext.Clientes.Find(clienteEnEdicion.Cedula);
+            if (existingCliente != null)
+            {
+                existingCliente.Nombre = clienteEnEdicion.Nombre ?? existingCliente.Nombre;
+                existingCliente.Apellido = clienteEnEdicion.Apellido ?? existingCliente.Apellido;
+                existingCliente.Correo = clienteEnEdicion.Correo ?? existingCliente.Correo;
+                existingCliente.Telefono = clienteEnEdicion.Telefono ?? existingCliente.Telefono;
+                existingCliente.Celular = clienteEnEdicion.Celular ?? existingCliente.Celular;
+                existingCliente.Direccion = clienteEnEdicion.Direccion ?? existingCliente.Direccion;
+                existingCliente.EstadoCivil = clienteEnEdicion.EstadoCivil ?? existingCliente.EstadoCivil;
+
+                dbContext.SaveChanges();
+                mensaje = "Cambios guardados";
+                clienteEnEdicion = null;
+            }
+        }
+    }
+}

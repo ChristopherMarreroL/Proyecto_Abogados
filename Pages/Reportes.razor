@@ -1,0 +1,234 @@
+﻿@page "/reportes"
+@using System.Collections.Generic
+@using System.Linq
+@using System.Threading.Tasks
+@using Microsoft.EntityFrameworkCore
+@using System.Text
+@inject IJSRuntime JSRuntime
+@inject ApplicationDbContext DbContext
+
+<PageTitle>Reportes</PageTitle>
+
+<div style="margin: 20px; text-align: center;">
+    <h2 style="color: #333;"><b>Actualizar los casos</b></h2>
+    <br>
+    <button class="btn btn-success" @onclick="VisualizarCasos">Actualizar casos.</button>
+</div>
+
+
+<hr style="border-color: #ddd;">
+
+@if (casos != null && casos.Any())
+{
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th style="width: 10%;">CasoID</th>
+                            <th style="width: 10%;">Fecha</th>
+                            <th style="width: 10%;">Cliente</th>
+                            <th style="width: 10%;">Tipo de Caso</th>
+                            <th style="width: 15%;">Latitud</th>
+                            <th style="width: 15%;">Longitud</th>
+                            <th style="width: 15%;">Abogado Asignado</th>
+                            <th style="width: 10%;">Estado del Caso</th>
+                            <th style="width: 20%;">Descripción</th>
+                            <th style="width: 10%;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var caso in casos)
+                        {
+                            <tr>
+                                <td>@caso.CasoID</td>
+                                <td>@caso.FechaDelCaso</td>
+                                <td>@caso.Cliente</td>
+                                <td>@caso.TipoDeCaso</td>
+                                <td>@caso.UbicacionLatitud</td>
+                                <td>@caso.UbicacionLongitud</td>
+                                <td>@caso.AbogadoAsignado</td>
+                                <td>@caso.EstadoDelCaso</td>
+                                <td>@caso.DescripcionDelCaso</td>
+                                <td>
+                                    <button class="btn btn-outline-danger" @onclick="() => AbrirHtml(caso)">Abrir HTML</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    h2 {
+        margin-bottom: 10px;
+    }
+
+    hr {
+        margin: 20px;
+    }
+</style>
+
+
+@code {
+    public List<ApplicationDbContext.GestionCaso> casos;
+    public CasoService casoService;
+    private bool mostrarIngresoHtml = false;
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
+            optionsBuilder.UseSqlServer("Server=CHRISTOPHER;Database=MesaDeAbogados;Integrated Security=True;TrustServerCertificate=True;");
+            casoService = new CasoService(new ApplicationDbContext(optionsBuilder.Options));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al conectar a la base de datos: {ex.Message}");
+        }
+
+        base.OnInitialized();
+    }
+
+    public void VisualizarCasos()
+    {
+        casos = casoService.GetAllCasos();
+    }
+
+    //generar repporte
+    private void AbrirHtml(ApplicationDbContext.GestionCaso caso)
+    {
+        // Genera el HTML para este caso
+        var casosHtml = GenerarHtml(caso);
+
+        if (casosHtml != null)
+        {
+            try
+            {
+                // Convierte el HTML a Base64
+                var base64Html = Convert.ToBase64String(Encoding.UTF8.GetBytes(casosHtml));
+
+                // Abre una nueva ventana y establece el contenido HTML
+                string script = $"var newWindow = window.open('data:text/html;base64,{base64Html}'); newWindow.document.write(atob('{base64Html}'));";
+
+                // Ejecuta el script
+                JSRuntime.InvokeVoidAsync("eval", script);
+
+                Console.WriteLine("El contenido HTML se ha abierto correctamente.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al abrir el contenido HTML: {ex.Message}");
+            }
+        }
+        else
+        {
+            JSRuntime.InvokeVoidAsync("alert", "Contenido no válido.");
+        }
+    }
+
+    public bool VerificarHtmlAbierto(string nombreArchivo)
+    {
+        string rutaCompleta = Path.Combine(HtmlService.RutaCarpeta, $"{nombreArchivo}.html");
+
+        try
+        {
+            using (FileStream fs = new FileStream(rutaCompleta, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                return true;
+            }
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+    }
+
+    private string GenerarHtml(ApplicationDbContext.GestionCaso caso)
+    {
+        StringBuilder htmlBuilder = new StringBuilder();
+
+        htmlBuilder.Append("<html><head><title>Informe de Caso</title></head><body>");
+
+        htmlBuilder.Append("<h1>Informe de Caso</h1>");
+
+        htmlBuilder.Append("<table border='1'>");
+
+        htmlBuilder.Append("<tr>");
+        htmlBuilder.Append("<th>Caso ID</th>");
+        htmlBuilder.Append("<th>Fecha del Caso</th>");
+        htmlBuilder.Append("<th>Cliente</th>");
+        htmlBuilder.Append("<th>Tipo de Caso</th>");
+        htmlBuilder.Append("<th>Ubicación Latitud</th>");
+        htmlBuilder.Append("<th>Ubicación Longitud</th>");
+        htmlBuilder.Append("<th>Descripción del Caso</th>");
+        htmlBuilder.Append("<th>Abogado Asignado</th>");
+        htmlBuilder.Append("<th>Estado del Caso</th>");
+        htmlBuilder.Append("</tr>");
+
+        htmlBuilder.Append("<tr>");
+        htmlBuilder.Append($"<td>{caso.CasoID}</td>");
+        htmlBuilder.Append($"<td>{caso.FechaDelCaso}</td>");
+        htmlBuilder.Append($"<td>{caso.Cliente}</td>");
+        htmlBuilder.Append($"<td>{caso.TipoDeCaso}</td>");
+        htmlBuilder.Append($"<td>{caso.UbicacionLatitud}</td>");
+        htmlBuilder.Append($"<td>{caso.UbicacionLongitud}</td>");
+        htmlBuilder.Append($"<td>{caso.DescripcionDelCaso}</td>");
+        htmlBuilder.Append($"<td>{caso.AbogadoAsignado}</td>");
+        htmlBuilder.Append($"<td>{caso.EstadoDelCaso}</td>");
+        htmlBuilder.Append("</tr>");
+
+        htmlBuilder.Append("</table>");
+
+        htmlBuilder.Append("</body></html>");
+
+        return htmlBuilder.ToString();
+    }
+
+
+    public class CasoService
+    {
+        public readonly ApplicationDbContext _context;
+
+        public CasoService(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public List<ApplicationDbContext.GestionCaso> GetAllCasos()
+        {
+            return _context.gestionCasos.ToList();
+        }
+    }
+
+    public static class HtmlService
+    {
+        public static string RutaCarpeta { get; private set; } = "wwwroot/impresiones";
+
+        public static void GuardarHtml(string nombreArchivo, string casoID, string contenidoHtml)
+        {
+            string rutaCompleta = Path.Combine(RutaCarpeta, $"{nombreArchivo}_{casoID}.html");
+            File.WriteAllText(rutaCompleta, contenidoHtml);
+        }
+    }
+
+        public void GuardarHtml(string nombreArchivo, string contenidoHtml)
+        {
+            string rutaCompleta = Path.Combine(HtmlService.RutaCarpeta, $"{nombreArchivo}.html");
+
+            int contador = 1;
+            while (File.Exists(rutaCompleta))
+            {
+                rutaCompleta = Path.Combine(HtmlService.RutaCarpeta, $"{nombreArchivo}_{contador}.html");
+                contador++;
+            }
+
+            File.WriteAllText(rutaCompleta, contenidoHtml);
+        }
+
+}

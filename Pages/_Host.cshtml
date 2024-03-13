@@ -1,0 +1,97 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Components.Web
+@namespace PruebaFinal.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="~/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link href="css/site.css" rel="stylesheet" />
+    <link href="PruebaFinal.styles.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
+</head>
+<body>
+    <component type="typeof(App)" render-mode="ServerPrerendered" />
+
+    <div id="blazor-error-ui">
+        <environment include="Staging,Production">
+            An error has occurred. This application may no longer respond until reloaded.
+        </environment>
+        <environment include="Development">
+            An unhandled exception has occurred. See browser dev tools for details.
+        </environment>
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script>
+        window.GenerarMapa = async (casos) => {
+            console.log('Casos:', casos);
+
+            try {
+                console.log('Casos recibidos desde Blazor:', casos);
+
+                console.log('Antes de crear el mapa...');
+                var map = L.map('map').setView([51.5, -0.09], 2);
+
+                // Manejo de errores en la carga de Leaflet
+                try {
+                    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }).addTo(map);
+                } catch (leafletError) {
+                    console.error('Error al cargar Leaflet:', leafletError);
+                    return;
+                }
+
+                if (Array.isArray(casos) && casos.length > 0) {
+                    var bounds = L.latLngBounds();
+
+                    casos.forEach(caso => {
+                        console.log('Caso actual:', caso);
+
+                        // Verifica si las coordenadas son válidas
+                        if (!isNaN(caso.ubicacionLatitud) && !isNaN(caso.ubicacionLongitud)) {
+                            var latLng = [caso.ubicacionLatitud, caso.ubicacionLongitud];
+                            console.log('Coordenadas del caso:', latLng);
+
+                            bounds.extend(latLng); 
+
+                            var popupContent = `<b>Cliente:</b> ${caso.cliente}<br><b>Tipo de Caso:</b> ${caso.tipoDeCaso}<br><b>Descripción:</b> ${caso.descripcionDelCaso || 'N/A'}`;
+
+                            var marker = L.marker(latLng)
+                                .addTo(map)
+                                .bindPopup(popupContent)
+                                .openPopup();
+                            marker.on('click', function () {
+                                console.log('Marcador clicado:', caso);
+                            });
+
+                            console.log('Marcador agregado en coordenadas:', latLng);
+                        } else {
+                            console.error('Coordenadas no válidas:', caso.ubicacionLatitud, caso.ubicacionLongitud);
+                        }
+                    });
+
+                    // Ajusta la vista para centrar el mapa
+                    if (bounds.isValid()) {
+                        map.fitBounds(bounds);
+                    }
+                } else {
+                    console.error('No hay casos con coordenadas.');
+                }
+            } catch (error) {
+                console.error('Error en GenerarMapa:', error);
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="_framework/blazor.server.js"></script>
+</body>
+</html>

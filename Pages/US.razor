@@ -1,0 +1,84 @@
+﻿@page "/usuariosistema"
+@using Microsoft.EntityFrameworkCore
+@using PruebaFinal
+
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="text-center"><b>Agregar Abogado</b></h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="cedula" class="form-label"><b>Cédula:</b></label>
+                        <input @bind="abogado.Cedula" id="cedula" class="form-control" placeholder="Cédula del Abogado" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label"><b>Nombre:</b></label>
+                        <input @bind="abogado.Nombre" id="nombre" class="form-control" placeholder="Nombre del Abogado" />
+                    </div>
+
+                    <br>
+                    <center><button @onclick="AgregarAbogado" class="btn btn-primary">Agregar Abogado.</button></center>
+
+                    @if (!string.IsNullOrEmpty(mensaje))
+                    {
+                        <div class="alert alert-success mt-3" role="alert">
+                            @mensaje
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public ApplicationDbContext.Abogado abogado = new ApplicationDbContext.Abogado();
+    public string mensaje;
+    public AbogadoService abogadoService;
+
+    protected override void OnInitialized()
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
+        optionsBuilder.UseSqlServer("Server=CHRISTOPHER;Database=MesaDeAbogados;Integrated Security=True;TrustServerCertificate=True;");
+        abogadoService = new AbogadoService(new ApplicationDbContext(optionsBuilder.Options));
+        base.OnInitialized();
+    }
+
+    public void AgregarAbogado()
+    {
+        if (abogadoService.AgregarAbogado(abogado))
+        {
+            mensaje = "Abogado agregado";
+        }
+        else
+        {
+            mensaje = "Error: El Abogado con la cédula proporcionada ya existe.";
+        }
+    }
+
+    public class AbogadoService
+    {
+        public readonly ApplicationDbContext _context;
+
+        public AbogadoService(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public bool AgregarAbogado(ApplicationDbContext.Abogado abogado)
+        {
+            if (!_context.Abogados.Any(a => a.Cedula == abogado.Cedula))
+            {
+                _context.Abogados.Add(abogado);
+                _context.SaveChanges();
+                return true;
+            }
+            return false;
+        }
+    }
+}

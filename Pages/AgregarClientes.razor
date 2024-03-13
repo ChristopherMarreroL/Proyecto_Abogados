@@ -1,0 +1,129 @@
+﻿@page "/aclientes"
+@using Microsoft.EntityFrameworkCore
+@using PruebaFinal
+
+<PageTitle>Agregar Cliente</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="text-center"><b>Agregar Cliente:</b></h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="cedula" class="form-label"></label>
+                        <input @bind="cliente.Cedula" id="cedula" class="form-control" placeholder="Cédula" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label"></label>
+                        <input @bind="cliente.Nombre" id="nombre" class="form-control" placeholder="Nombre" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="apellido" class="form-label"></label>
+                        <input @bind="cliente.Apellido" id="apellido" class="form-control" placeholder="Apellido" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="correo" class="form-label"></label>
+                        <input @bind="cliente.Correo" id="correo" type="email" class="form-control" placeholder="Correo" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="telefono" class="form-label"></label>
+                        <input @bind="cliente.Telefono" id="telefono" class="form-control" placeholder="Telefono" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="celular" class="form-label"></label>
+                        <input @bind="cliente.Celular" id="celular" class="form-control" placeholder="Celular" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="direccion" class="form-label"></label>
+                        <input @bind="cliente.Direccion" id="direccion" class="form-control" placeholder="Direccion" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="estadoCivil" class="form-label"><b>Estado Civil:</b></label>
+                        <select @bind="cliente.EstadoCivil" class="form-control">
+                            <option>Soltero</option>
+                            <option>Casado</option>
+                            <option>Viudo</option>
+                        </select>
+                    </div>
+
+                    <br>
+                    <center><button @onclick="AgregarCliente" class="btn btn-info">Agregar Cliente.</button></center>
+
+
+                    @if (!string.IsNullOrEmpty(mensaje))
+                    {
+                        <div class="alert alert-success mt-3" role="alert">
+                            @mensaje
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    public ApplicationDbContext.Cliente cliente = new ApplicationDbContext.Cliente();
+    public string mensaje;
+    public ClienteService clienteService;
+
+    protected override void OnInitialized()
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
+        optionsBuilder.UseSqlServer("Server=CHRISTOPHER;Database=MesaDeAbogados;Integrated Security=True;TrustServerCertificate=True;");
+        clienteService = new ClienteService(new ApplicationDbContext(optionsBuilder.Options));
+        base.OnInitialized();
+    }
+
+    public void AgregarCliente()
+    {
+        var clienteExistente = clienteService.GetClientePorCedula(cliente.Cedula);
+
+        if (clienteExistente != null)
+        {
+            mensaje = "Cliente ya existe";
+        }
+        else
+        {
+            clienteService.AddCliente(cliente);
+            mensaje = "Cliente agregado";
+        }
+    }
+
+    public class ClienteService
+    {
+        public readonly ApplicationDbContext _context;
+
+        public ClienteService(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public List<ApplicationDbContext.Cliente> GetClientes()
+        {
+            return _context.Clientes.ToList();
+        }
+
+        public void AddCliente(ApplicationDbContext.Cliente cliente)
+        {
+            _context.Clientes.Add(cliente);
+            _context.SaveChanges();
+        }
+
+        public ApplicationDbContext.Cliente GetClientePorCedula(string cedula)
+        {
+            return _context.Clientes.FirstOrDefault(c => c.Cedula == cedula);
+        }
+    }
+}

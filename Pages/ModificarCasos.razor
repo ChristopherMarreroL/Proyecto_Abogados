@@ -1,0 +1,205 @@
+﻿@page "/editarCasos"
+
+@using Microsoft.EntityFrameworkCore
+@using PruebaFinal
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="text-center"><b>Editar Caso:</b></h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="idCasoBuscar" class="form-label"></label>
+                        <input @bind="idCasoBusqueda" id="idCasoBuscar" class="form-control" placeholder="ID del Caso:" />
+                    </div>
+
+                    <center><button @onclick="BuscarCaso" class="btn btn-warning">Buscar Caso.</button></center>
+
+                    @if (casoEnEdicion != null)
+                    {
+                        <div class="mb-3">
+                            <label for="fechaCasoEdit" class="form-label"><b>Fecha del caso:</b></label>
+                            <input @bind="casoEnEdicion.FechaDelCaso" id="fechaCasoEdit" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Cliente" class="form-label"><b>Cliente:</b></label>
+                            <select @bind="casoEnEdicion.Cliente" class="form-select">
+                                @foreach (var cliente in casoService.GetClientes())
+                                {
+                                    <option value="@cliente.Nombre">@cliente.Nombre</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="ubicacionLatitudEdit" class="form-label"><b>Ubicación Latitud:</b></label>
+                            <input @bind="casoEnEdicion.UbicacionLatitud" id="ubicacionLatitudEdit" class="form-control" placeholder="Ubicación Latitud" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="ubicacionLongitudEdit" class="form-label"><b>Ubicación Longitud:</b></label>
+                            <input @bind="casoEnEdicion.UbicacionLongitud" id="ubicacionLongitudEdit" class="form-control" placeholder="Ubicación Longitud" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tipoCasoEdit" class="form-label"><b>Tipo de caso:</b></label>
+                            <select @bind="casoEnEdicion.TipoDeCaso" class="form-select">
+                                @foreach (var tipoCaso in TiposDeCaso)
+                                {
+                                    <option value="@tipoCaso.EstadoCasos">@tipoCaso.EstadoCasos</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="abogadoAsignadoEdit" class="form-label"><b>Abogado asignado:</b></label>
+                            <select @bind="casoEnEdicion.AbogadoAsignado" class="form-select">
+                                @foreach (var abogado in Abogados)
+                                {
+                                    <option value="@abogado.Nombre">@abogado.Nombre</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="estadoCasoEdit" class="form-label"><b>Estado del caso:</b></label>
+                            <select @bind="casoEnEdicion.EstadoDelCaso" class="form-select">
+                                @foreach (var estado in Estados)
+                                {
+                                    <option value="@estado.EstadoNombre">@estado.EstadoNombre</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="descripcionCasoEdit" class="form-label"><b>Descripción del caso:</b></label>
+                            <input @bind="casoEnEdicion.DescripcionDelCaso" id="descripcionCasoEdit" class="form-control" placeholder="Descripción del caso" />
+                        </div>
+
+                        <br>
+                        <center><button @onclick="GuardarEdicion" class="btn btn-primary">Guardar Cambios.</button></center>
+
+                        <p>@mensaje</p>
+                    }
+                    else
+                    {
+                        <p>@mensaje</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public ApplicationDbContext dbContext;
+    public CasoService casoService { get; set; }
+    public ApplicationDbContext.GestionCaso casoEnEdicion;
+    public List<ApplicationDbContext.Caso> TiposDeCaso { get; set; }
+    public List<ApplicationDbContext.Abogado> Abogados { get; set; }
+    public List<ApplicationDbContext.Estado> Estados { get; set; }
+    public string idCasoBusqueda;
+    public string mensaje = "";
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
+            optionsBuilder.UseSqlServer("Server=CHRISTOPHER;Database=MesaDeAbogados;Integrated Security=True;TrustServerCertificate=True;");
+            dbContext = new ApplicationDbContext(optionsBuilder.Options);
+            casoService = new CasoService(dbContext);
+
+            // Cargar datos desde la base de datos
+            TiposDeCaso = casoService.GetTiposDeCaso();
+            Abogados = casoService.GetAbogados();
+            Estados = casoService.GetEstados();
+        }
+        catch (Exception ex)
+        {
+            // Manejar la excepción (por ejemplo, registrarla o mostrar un mensaje al usuario)
+            Console.WriteLine($"Error al cargar datos desde la base de datos: {ex.Message}");
+        }
+        base.OnInitialized();
+    }
+
+    public void BuscarCaso()
+    {
+        if (dbContext != null)
+        {
+            casoEnEdicion = dbContext.gestionCasos.FirstOrDefault(c => c.CasoID == idCasoBusqueda);
+            if (casoEnEdicion == null)
+            {
+                mensaje = "Caso no encontrado";
+            }
+            else
+            {
+                mensaje = "";
+            }
+        }
+    }
+
+    public void GuardarEdicion()
+    {
+        if (casoEnEdicion != null)
+        {
+            casoService.ActualizarCaso(casoEnEdicion);
+            mensaje = "Cambios guardados";
+        }
+    }
+
+    public class CasoService
+    {
+        private readonly ApplicationDbContext _context;
+
+        public CasoService(ApplicationDbContext context)
+        {
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+        }
+
+        public List<ApplicationDbContext.Abogado> GetAbogados() => _context.Abogados.ToList();
+
+        public List<ApplicationDbContext.Estado> GetEstados() => _context.Estados.ToList();
+
+        public List<ApplicationDbContext.GestionCaso> GetCaso() => _context.gestionCasos.ToList();
+
+        public void ActualizarCaso(ApplicationDbContext.GestionCaso casoActualizado)
+        {
+            var existingCaso = _context.gestionCasos.Find(casoActualizado.CasoID);
+
+            if (existingCaso != null)
+            {
+                existingCaso.FechaDelCaso = casoActualizado.FechaDelCaso;
+                existingCaso.Cliente = casoActualizado.Cliente;
+                existingCaso.UbicacionLatitud = casoActualizado.UbicacionLatitud;
+                existingCaso.UbicacionLongitud = casoActualizado.UbicacionLongitud;
+                existingCaso.TipoDeCaso = casoActualizado.TipoDeCaso;
+                existingCaso.AbogadoAsignado = casoActualizado.AbogadoAsignado;
+                existingCaso.EstadoDelCaso = casoActualizado.EstadoDelCaso;
+                existingCaso.DescripcionDelCaso = casoActualizado.DescripcionDelCaso;
+
+                _context.SaveChanges();
+            }
+        }
+
+        public ApplicationDbContext.GestionCaso GetCasoAll(ApplicationDbContext.GestionCaso gestionCaso) =>
+            _context.gestionCasos.FirstOrDefault(c =>
+                c.FechaDelCaso == gestionCaso.FechaDelCaso &&
+                c.Cliente == gestionCaso.Cliente &&
+                c.TipoDeCaso == gestionCaso.TipoDeCaso &&
+                c.UbicacionLatitud == gestionCaso.UbicacionLatitud &&
+                c.UbicacionLongitud == gestionCaso.UbicacionLongitud &&
+                c.DescripcionDelCaso == gestionCaso.DescripcionDelCaso &&
+                c.AbogadoAsignado == gestionCaso.AbogadoAsignado &&
+                c.EstadoDelCaso == gestionCaso.EstadoDelCaso
+            );
+
+        public List<ApplicationDbContext.Cliente> GetClientes() => _context.Clientes.ToList();
+
+        public List<ApplicationDbContext.Caso> GetTiposDeCaso() => _context.Casos.ToList();
+    }
+}
